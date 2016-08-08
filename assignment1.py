@@ -11,11 +11,6 @@ import math
 
 def initialize():
     n = [50, 100, 150, 200, 300]
-#    num = raw_input("Enter how many no. of points you want:")
-#    print 'Enter numbers in array: '
-#    for i in range(int(num)):
-#        z = raw_input("num :")
-#        n.append(int(z))
     X_min = -1.0
     X_max = 1.0
     dx = []
