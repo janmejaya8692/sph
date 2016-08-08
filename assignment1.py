@@ -10,12 +10,12 @@ import math
 
 
 def initialize():
-    n = []
-    num = raw_input("Enter how many no. of points you want:")
-    print 'Enter numbers in array: '
-    for i in range(int(num)):
-        z = raw_input("num :")
-        n.append(int(z))
+    n = [50, 100, 150, 200, 300]
+#    num = raw_input("Enter how many no. of points you want:")
+#    print 'Enter numbers in array: '
+#    for i in range(int(num)):
+#        z = raw_input("num :")
+#        n.append(int(z))
     X_min = -1.0
     X_max = 1.0
     dx = []
@@ -24,6 +24,22 @@ def initialize():
     h = np.array([0.7, 0.8, 0.9, 1.0, 1.1, 1.3, 1.5, 1.8, 2.0, 2.2])*dx[0]
     f = raw_input("Enter G for gaussian kernel and C for cubicspline kernel")
     return h, dx, n, f, X_min, X_max
+
+
+def kernel_decis(g, f, x, y, h, n):
+        if(f == 'C'):
+            if(g == 4):
+                W = cubicspline(x, y, h, n)
+            else:
+                W = diff_cubics(x, y, h, n)
+        elif(f == 'G'):
+            if(g == 4):
+                W = gaussian(x, y, h, n)
+            else:
+                W = diff_gaussian(x, y, h, n)
+        else:
+            print 'entered wrong option'
+        return W
 
 
 def cubicspline(x, y, h, n):
@@ -87,14 +103,10 @@ def diff_gaussian(x, y, h, n):
 def cal_rho(n, h, f, x):
     rho = []
     m_j = 1.0
+    g = 4
     for i in range(n):
         a = 0
-        if(f == 'C'):
-            W = cubicspline(x, x[i], h, n)
-        elif(f == 'G'):
-            W = gaussian(x, x[i], h, n)
-        else:
-            print 'entered wrong option'
+        W = kernel_decis(g, f, x, x[i], h, n)
         for j in range(n):
             a += (m_j*W[j])
         rho.append(a)
@@ -105,14 +117,10 @@ def cal_fun_val(n, h, f, x):
     rho = cal_rho(n, h, f, x)
     m_j = 1.0
     fun = []
+    g = 4
     for i in range(n):
         b = 0
-        if(f == 'C'):
-            W = cubicspline(x, x[i], h, n)
-        elif(f == 'G'):
-            W = gaussian(x, x[i], h, n)
-        else:
-            print 'entered wrong option'
+        W = kernel_decis(g, f, x, x[i], h, n)
         for j in range(n):
             b += ((m_j/rho[j])*np.sin(2*np.pi*x[j])*W[j])
         fun.append(b)
@@ -127,23 +135,19 @@ def cal_fun_diff(n, h, f, x):
     diff_fun = []
     z = []
     m_j = 1.0
+    g = 5
     for i in range(n):
         l = 0
-        if(f == 'C'):
-            W = diff_cubics(x, x[i], h, n)
-        elif(f == 'G'):
-            W = diff_gaussian(x, x[i], h, n)
-        else:
-            print 'entered wrong option'
+        W = kernel_decis(g, f, x, x[i], h, n)
         for j in range(n):
             if(i != j):
                 l += 1*(m_j/rho[j])*np.sin(2*np.pi*x[j])*W[j] *\
                                 (abs(x[i]-x[j])/(x[i]-x[j]))
         diff_fun.append(l)
         z.append(2*np.pi*np.cos(2*np.pi*x[i]))
-    plt.plot(x, z)
-    plt.plot(x, diff_fun)
-    plt.show()
+#    plt.plot(x, z)
+#    plt.plot(x, diff_fun)
+#    plt.show()
     return diff_fun
 
 
