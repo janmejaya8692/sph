@@ -10,15 +10,15 @@ import math
 
 
 def initialize():
-    n = [50, 100, 150, 200, 300]
+    n = [100, 150, 200, 300, 400]
     X_min = -1.0
     X_max = 1.0
     dx = []
     for i in range(len(n)):
         dx.append((X_max-X_min)/n[i])
-    h = np.array([0.7, 0.8, 0.9, 1.0, 1.1, 1.3, 1.5, 1.8, 2.0, 2.2])*dx[0]
+#    h = np.array([0.7, 0.9, 1.1, 1.3, 1.5, 1.8, 2.0, 2.2])*dx[0]
     f = raw_input("Enter G for gaussian kernel and C for cubicspline kernel")
-    return h, dx, n, f, X_min, X_max
+    return dx, n, f, X_min, X_max
 
 
 def kernel_decis(g, f, x, y, h, n):
@@ -43,7 +43,7 @@ def cubicspline(x, y, h, n):
         q = abs(y-x[i])/h
         if(q < 1.0):
             W = (1.0/h)*(2.0/3-q**2+(q**3)/2.0)
-        elif(1.0 < q < 2.0):
+        elif(1.0 <= q < 2.0):
             W = (1.0/(6*h))*(2-q)**3
         else:
             W = 0
@@ -60,7 +60,7 @@ def gaussian(x, y, h, n):
         q = abs(y-x[i])/h
         W = 1/(np.sqrt(np.pi)*h)*(math.exp(-q**2))
         W_val.append(W)
-#    if(y == x[10]):
+#    if(y == x[150]):
 #        plt.plot(x, W_val)
 #        plt.show()
     return W_val
@@ -68,29 +68,33 @@ def gaussian(x, y, h, n):
 
 def diff_cubics(x, y, h, n):
     W_val = []
+    Q = []
     for i in range(n):
         q = abs(y-x[i])/h
-        if(q < 1.0):
+        Q.append(q)
+        if(0 <= q < 1):
             W = (-2*q/h**2)+(3*q**2)/(2*h**2)
-        elif(1.0 < q < 2.0):
-            W = (-1/(2*h**2))*(2-q)**2
-        else:
+        elif(1 <= q < 2):
+            W = -(2-q)**2/(2*h**2)
+        elif(q >= 2):
             W = 0
         W_val.append(W)
 #    if(y == x[10]):
-#       plt.plot(x, W_val)
-#       plt.show()
+#        plt.plot(Q, W_val)
+#        plt.show()
     return W_val
 
 
 def diff_gaussian(x, y, h, n):
     W_val = []
+    Q = []
     for i in range(n):
         q = abs(y-x[i])/h
-        W = -2*q/(np.sqrt(np.pi)*h**2)*(math.exp(-q**2))
+        Q.append(q)
+        W = -2*q/(np.sqrt(np.pi)*h**2)*math.exp(-q**2)
         W_val.append(W)
-#    if(y == x[10]):
-#        plt.plot(x, W_val)
+#    if(y == x[150]):
+#        plt.plot(Q, W_val)
 #        plt.show()
     return W_val
 
@@ -119,16 +123,21 @@ def cal_fun_val(n, h, f, x):
         for j in range(n):
             b += ((m_j/rho[j])*np.sin(2*np.pi*x[j])*W[j])
         fun.append(b)
-#    plt.plot(x, np.sin(2*np.pi*x))
-#    plt.plot(x, fun)
-#    plt.show()
+#    if(n == 200):
+#        plt.plot(x, np.sin(2*np.pi*x), label='actaul value')
+#        plt.plot(x, fun, label='approximate value')
+#        plt.xlabel('x')
+#        plt.ylabel('Function value')
+#        plt.legend(loc='best')
+#        plt.title('value of the function sin(2*pi*x) using %s h value and 200 points' % h, fontsize=8)
+#        plt.show()
     return fun
 
 
 def cal_fun_diff(n, h, f, x):
     rho = cal_rho(n, h, f, x)
     diff_fun = []
-    z = []
+#    z = []
     m_j = 1.0
     g = 5
     for i in range(n):
@@ -139,10 +148,14 @@ def cal_fun_diff(n, h, f, x):
                 l += 1*(m_j/rho[j])*np.sin(2*np.pi*x[j])*W[j] *\
                                 (abs(x[i]-x[j])/(x[i]-x[j]))
         diff_fun.append(l)
-        z.append(2*np.pi*np.cos(2*np.pi*x[i]))
-#    plt.plot(x, z)
-#    plt.plot(x, diff_fun)
-#    plt.show()
+    if(n == 200):
+        plt.plot(x, 2*np.pi*np.cos(2*np.pi*x), label='actaul value')
+        plt.plot(x, diff_fun, label='approximate value')
+        plt.xlabel('x')
+        plt.ylabel('Function value')
+        plt.legend(loc='best')
+        plt.title('value of the function sin(2*pi*x) using %s h value and 200 points' % h, fontsize=8)
+        plt.show()
     return diff_fun
 
 
@@ -151,38 +164,45 @@ def error(n, h, f, x):
     m = 0
     fun = cal_fun_val(n, h, f, x)
     diff_fun = cal_fun_diff(n, h, f, x)
-    for i in range(n):
+    i = 0
+    while(i < n):
         c += (((fun[i]-np.sin(2*np.pi*x[i]))/1.0)**2)
-        m += (((diff_fun[i]-2*np.pi*np.cos(2*np.pi*x[i]))/1.0)**2)
+        i += 1
+    j = 0
+    while(j < n):
+#        print j
+        m += (((diff_fun[j]-2*np.pi*np.cos(2*np.pi*x[j]))/(2*np.pi))**2)
+        j += 1
     return np.sqrt(c), np.sqrt(m)
 
 
 def plot():
     p = 10
-    (h, dx, n, f, X_min, X_max) = initialize()
+    (dx, n, f, X_min, X_max) = initialize()
     for i in range(len(n)):
         x = np.arange(X_min, X_max, dx[i])
+        h = np.array(np.linspace(1., 5.0, 5))*dx[i]
         err = []
         diff_err = []
         for j in range(len(h)):
             (er, diff_er) = error(n[i], h[j], f, x)
             err.append(er)
             diff_err.append(diff_er)
-        plt.figure(i)
-        plt.plot(h/dx[0], err, label="for no. of points %s" % n[i])
-        plt.xlabel("h value")
-        plt.ylabel("error")
-        plt.title("error vs h value for %s no of points using %s kernel"
-                  % (n[i], f), fontsize=10)
-        plt.legend(loc="best")
-        plt.savefig('%s.png' % i)
-        plt.figure(p)
-        plt.plot(h/dx[0], diff_err, label="for no. of points %s" % n[i])
-        plt.xlabel("h value")
-        plt.ylabel("differential error")
-        plt.title("differential error vs h value for %s no of points \
-using %s kernel" % (n[i], f), fontsize=10)
-        plt.legend(loc="best")
-        plt.savefig('%s.png' % p)
+#        plt.figure(1)
+#        plt.plot(h/dx[i], err, label="for no. of points %s" % n[i])
+#        plt.xlabel("h value")
+#        plt.ylabel("error")
+#        plt.title("error vs h value for %s set of points using %s kernel"
+#                  % (len(n), f), fontsize=10)
+#        plt.legend(loc="best")
+#        plt.savefig('1.png')
+#        plt.figure(2)
+#        plt.plot(h/dx[i], diff_err)  # label="for no. of points %s" % n[i])
+#        plt.xlabel("h/dx value")
+#        plt.ylabel("error in derivative")
+#        plt.title("error in derivative of the function vs h value for %s set of points \
+#using %s kernel" % (len(n), f), fontsize=10)
+#        plt.legend(loc="best")
+#        plt.savefig('2.png')
         p += 1
 plot()
